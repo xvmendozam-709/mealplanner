@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}Goals{% endblock %}
+
+{% block main %}
+<h1 class="mb-3">Daily Goals</h1>
+
+{% if goal %}
+<p class="text-muted">
+    Current goal: P {{ goal.protein_g }}g • C {{ goal.carbs_g }}g • F {{ goal.fat_g }}g
+    {% if goal.calories is not none %} • {{ goal.calories }} kcal{% endif %}
+</p>
+{% else %}
+<p class="text-muted">No goals set yet.</p>
+{% endif %}
+
+<form method="post" class="row g-3">
+    <div class="col-md-3">
+        <label class="form-label">Protein (g)</label>
+        <input type="number" min="0" name="protein_g" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Carbs (g)</label>
+        <input type="number" min="0" name="carbs_g" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Fat (g)</label>
+        <input type="number" min="0" name="fat_g" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Calories (optional)</label>
+        <input type="number" min="0" name="calories" class="form-control">
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Save goals</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Back</a>
+    </div>
+</form>
+{% endblock %}
