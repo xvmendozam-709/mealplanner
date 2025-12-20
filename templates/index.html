@@ -1,14 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Meal Planner</title>
-</head>
+{% block title %}Dashboard{% endblock %}
 
-<body>
-    <h1>Meal & Macro Planner 🍽️</h1>
-    <p>Flask is running correctly.</p>
-</body>
+{% block main %}
+<h1 class="mb-3">Meal & Macro Planner 🍽️</h1>
+<p class="text-muted">Bootstrap + layout funcionando.</p>
 
-</html>
+<div class="card">
+    <div class="card-body">
+        <strong>Siguiente paso:</strong> crear Goals y Meals (CRUD).
+    </div>
+</div>
+{% endblock %}
