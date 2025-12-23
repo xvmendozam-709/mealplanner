@@ -1,5 +1,7 @@
 import sqlite3
+
 from flask import Flask, render_template, request, redirect, url_for
+
 
 app = Flask(__name__)
 
@@ -8,6 +10,12 @@ DB = "macros.db"
 
 def get_db_connection():
     conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_db():
+    conn = sqlite3.connect("macros.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -52,3 +60,51 @@ def goals():
     ).fetchone()
     conn.close()
     return render_template("goals.html", goal=goal)
+
+
+@app.route("/meals", methods=["GET", "POST"])
+def meals():
+    db = get_db()
+
+    # Por ahora usamos user_id=1 (luego implementaremos login)
+    user_id = 1
+
+    if request.method == "POST":
+        food_id = int(request.form.get("food_id"))
+        grams = float(request.form.get("grams"))
+
+        food = db.execute(
+            "SELECT * FROM foods WHERE id = ?",
+            (food_id,)
+        )[0]
+
+        protein = food["protein_100g"] * grams / 100
+        carbs = food["carbs_100g"] * grams / 100
+        fat = food["fat_100g"] * grams / 100
+        calories = protein * 4 + carbs * 4 + fat * 9
+
+        db.execute(
+            """
+            INSERT INTO meals (user_id, food_id, grams, protein_g, carbs_g, fat_g, calories)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, food_id, grams, protein, carbs, fat, calories)
+        )
+        db.commit()
+        return redirect("/meals")
+
+    # GET
+    foods = db.execute("SELECT * FROM foods")
+
+    meals = db.execute(
+        """
+        SELECT meals.*, foods.name
+        FROM meals
+        JOIN foods ON meals.food_id = foods.id
+        WHERE meals.user_id = ? AND DATE(meals.created_at) = DATE('now')
+        ORDER BY meals.created_at DESC
+        """,
+        (user_id,)
+    )
+
+    return render_template("meals.html", foods=foods, meals=meals)

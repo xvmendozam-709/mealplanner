@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Meals{% endblock %}
+
+{% block main %}
+<h2>Create Meal</h2>
+
+<form method="post">
+    <select name="food_id" required>
+        <option value="">Select food</option>
+        {% for food in foods %}
+        <option value="{{ food.id }}">{{ food.name }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="number" name="grams" placeholder="Grams eaten" required>
+
+    <button type="submit">Add meal</button>
+</form>
+
+
+{% endblock %}
