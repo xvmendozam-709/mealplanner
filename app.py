@@ -57,13 +57,6 @@ def register():
         )
         db.commit()
 
-        # Iniciar sesión automáticamente
-        user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
-        session["user_id"] = user["id"]
-        session["username"] = user["username"]
-
-        return redirect("/")
-
     return render_template("register.html")
 
 
@@ -77,16 +70,16 @@ def login():
         password = request.form.get("password")
 
         if not username:
-            return render_template("login.html", error="Debe ingresar un usuario")
+            return render_template("login.html", error="Must enter a user")
         if not password:
-            return render_template("login.html", error="Debe ingresar una contraseña")
+            return render_template("login.html", error="Must enter a password")
 
         # Verificar credenciales
         db = get_db()
         user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
 
         if user is None or not check_password_hash(user["hash"], password):
-            return render_template("login.html", error="Usuario o contraseña incorrectos")
+            return render_template("login.html", error="User or passwoord incorrect")
 
         # Iniciar sesión
         session["user_id"] = user["id"]
@@ -128,17 +121,11 @@ def index():
         (user_id,)
     ).fetchone()
 
-    # Obtener peso actual
-    current_weight = db.execute(
-        "SELECT weight_kg FROM weight WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-        (user_id,)
-    ).fetchone()
 
     return render_template(
         "index.html",
         goal=goal,
         today=today_totals,
-        weight=current_weight
     )
 
 
@@ -229,7 +216,34 @@ def meals():
     
     return render_template("meals.html", foods=foods, meals=meals_list)
 
+@app.route("/weight", methods=["GET", "POST"])
+@login_required
+def weight():
+    db = get_db()
+    user_id = session["user_id"]
 
+    if request.method == "POST":
+        weight_kg = float(request.form.get("weight_kg"))
+
+        db.execute(
+            "INSERT INTO weight (user_id, weight_kg) VALUES (?, ?)",
+            (user_id, weight_kg)
+        )
+        db.commit()
+        return redirect("/weight")
+
+    # GET - últimos 30 registros
+    history = db.execute(
+        """
+        SELECT * FROM weight 
+        WHERE user_id = ? 
+        ORDER BY recorded_at DESC 
+        LIMIT 30
+        """,
+        (user_id,)
+    )
+
+    return render_template("weight.html", history=history)
 
 if __name__ == "__main__":
     app.run(debug=True)
