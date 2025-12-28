@@ -3,15 +3,162 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block main %}
-<h1 class="mb-3">Meal & Macro Planner 🍽️</h1>
-{% if goal %}
-<div class="alert alert-success">
-    Goal: P {{ goal.protein_g }}g • C {{ goal.carbs_g }}g • F {{ goal.fat_g }}g
-    {% if goal.calories is not none %} • {{ goal.calories }} kcal{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">🍽️ Meal & Macro Planner</h1>
+    {% if weight %}
+    <span class="badge bg-info fs-6">Weight: {{ "%.1f"|format(weight["weight_kg"]) }} kg</span>
+    {% endif %}
 </div>
+
+{% if goal %}
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <div>
+        <strong>Daily goal:</strong>
+        P {{ goal.protein_g }}g • C {{ goal.carbs_g }}g • F {{ goal.fat_g }}g
+        {% if goal.calories %} • {{ goal.calories }} kcal{% endif %}
+    </div>
+    <a href="{{ url_for('goals') }}" class="btn btn-sm btn-outline-success">Editar</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Proteína -->
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Protein</h6>
+                <h3 class="mb-1">{{ "%.0f"|format(today.protein) }}g</h3>
+                <small class="text-muted">Goal: {{ goal.protein_g }}g</small>
+                <div class="progress mt-2" style="height: 8px;">
+                    {% set protein_pct = (today.protein / goal.protein_g * 100) if goal.protein_g > 0 else 0 %}
+                    <div class="progress-bar bg-success" style="width: {{ [protein_pct, 100]|min }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.0f"|format(protein_pct) }}%</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carbohidratos -->
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Carbs</h6>
+                <h3 class="mb-1">{{ "%.0f"|format(today.carbs) }}g</h3>
+                <small class="text-muted">Goal: {{ goal.carbs_g }}g</small>
+                <div class="progress mt-2" style="height: 8px;">
+                    {% set carbs_pct = (today.carbs / goal.carbs_g * 100) if goal.carbs_g > 0 else 0 %}
+                    <div class="progress-bar bg-primary" style="width: {{ [carbs_pct, 100]|min }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.0f"|format(carbs_pct) }}%</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grasas -->
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Fat</h6>
+                <h3 class="mb-1">{{ "%.0f"|format(today.fat) }}g</h3>
+                <small class="text-muted">Goal: {{ goal.fat_g }}g</small>
+                <div class="progress mt-2" style="height: 8px;">
+                    {% set fat_pct = (today.fat / goal.fat_g * 100) if goal.fat_g > 0 else 0 %}
+                    <div class="progress-bar bg-warning" style="width: {{ [fat_pct, 100]|min }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.0f"|format(fat_pct) }}%</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calorías -->
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Calories</h6>
+                <h3 class="mb-1">{{ "%.0f"|format(today.calories) }}</h3>
+                {% if goal.calories %}
+                <small class="text-muted">Goal: {{ goal.calories }} kcal</small>
+                <div class="progress mt-2" style="height: 8px;">
+                    {% set cal_pct = (today.calories / goal.calories * 100) %}
+                    <div class="progress-bar bg-danger" style="width: {{ [cal_pct, 100]|min }}%"></div>
+                </div>
+                <small class="text-muted">{{ "%.0f"|format(cal_pct) }}%</small>
+                {% else %}
+                <small class="text-muted">No goal</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 {% else %}
 <div class="alert alert-warning">
-    No goals yet. <a href="{{ url_for('goals') }}">Set your goals</a>.
+    You don't have setted up goals. <a href="{{ url_for('goals') }}" class="alert-link">Set your goals here</a>
 </div>
 {% endif %}
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Quick Actions</h5>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('meals') }}" class="btn btn-primary">
+                        ➕ Add Meal
+                    </a>
+                    <a href="{{ url_for('goals') }}" class="btn btn-outline-primary">
+                        🎯 Set up goals
+                    </a>
+                    <a href="{{ url_for('weight') }}" class="btn btn-outline-info">
+                        ⚖️ Register Weight
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Today's resume</h5>
+                <p class="text-muted mb-2">Actual consumption vs. goal</p>
+
+                {% if goal %}
+                <div class="mb-3">
+                    {% set total_goal = goal.protein_g + goal.carbs_g + goal.fat_g %}
+                    {% set total_consumed = today.protein + today.carbs + today.fat %}
+                    {% set overall_pct = (total_consumed / total_goal * 100) if total_goal > 0 else 0 %}
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>General Progress</span>
+                        <span>{{ "%.0f"|format(overall_pct) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar" style="width: {{ [overall_pct, 100]|min }}%">
+                            {{ "%.0f"|format(total_consumed) }}g / {{ total_goal }}g
+                        </div>
+                    </div>
+                </div>
+
+                {% if overall_pct >= 90 and overall_pct <= 110 %} <div class="alert alert-success mb-0">
+                    ✅ Excelent! You're near your daily goal!
+            </div>
+            {% elif overall_pct > 110 %}
+            <div class="alert alert-warning mb-0">
+                ⚠️ You've exceeded your daily goal
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                📊 You are {{ "%.0f"|format(total_goal - total_consumed) }}g short to reach your goal
+            </div>
+            {% endif %}
+
+            {% else %}
+            <p class="text-muted">Set up your goals to see your progress</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+
 {% endblock %}
