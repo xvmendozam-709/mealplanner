@@ -1,4 +1,4 @@
--- Tabla de usuarios
+-- USERS table
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Tabla de metas (goals)
+-- GOALS table
 CREATE TABLE IF NOT EXISTS goals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS goals (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Tabla de alimentos
+-- FOODS table
 CREATE TABLE IF NOT EXISTS foods (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS foods (
     fat_100g REAL NOT NULL
 );
 
--- Tabla de comidas/meals
+-- MEALS table
 CREATE TABLE IF NOT EXISTS meals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS meals (
     FOREIGN KEY (food_id) REFERENCES foods(id)
 );
 
--- Tabla de peso
+-- WEIGHT table
 CREATE TABLE IF NOT EXISTS weight (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,

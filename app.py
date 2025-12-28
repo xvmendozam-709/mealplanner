@@ -86,7 +86,7 @@ def login():
         user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
 
         if user is None:
-            return render_template("login.html", error="User does not exist. Want to register?")
+            return render_template("login.html", error="User does not exist")
         
         if not check_password_hash(user["hash"], password):
             return render_template("login.html", error="Incorrect password")
@@ -131,6 +131,30 @@ def index():
         (user_id,)
     ).fetchone()
 
+    # Get weekly averages (last 7 days)
+    weekly_avg = db.execute(
+        """
+        SELECT 
+            AVG(daily_protein) as avg_protein,
+            AVG(daily_carbs) as avg_carbs,
+            AVG(daily_fat) as avg_fat,
+            AVG(daily_calories) as avg_calories
+        FROM (
+            SELECT 
+                DATE(created_at) as day,
+                SUM(protein_g) as daily_protein,
+                SUM(carbs_g) as daily_carbs,
+                SUM(fat_g) as daily_fat,
+                SUM(calories) as daily_calories
+            FROM meals
+            WHERE user_id = ? 
+            AND DATE(created_at) >= DATE('now', '-7 days')
+            GROUP BY DATE(created_at)
+        )
+        """,
+        (user_id,)
+    ).fetchone()
+
     # Get current weight
     current_weight = db.execute(
         "SELECT weight_kg FROM weight WHERE user_id = ? ORDER BY id DESC LIMIT 1",
@@ -141,6 +165,7 @@ def index():
         "index.html",
         goal=goal,
         today=today_totals,
+        weekly=weekly_avg,
         weight=current_weight
     )
 
@@ -263,8 +288,30 @@ def add_food():
 @app.route("/meals", methods=["GET", "POST"])
 @login_required
 def meals():
+    from datetime import datetime, timedelta
+    
     db = get_db()
     user_id = session["user_id"]
+    
+    # Get date parameter (default to today)
+    date_param = request.args.get('date')
+    if date_param:
+        try:
+            current_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+        except:
+            current_date = datetime.now().date()
+    else:
+        current_date = datetime.now().date()
+    
+    today = datetime.now().date()
+    
+    # Calculate previous and next dates
+    prev_date = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
+    next_date = (current_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    current_date_str = current_date.strftime('%Y-%m-%d')
+    
+    # Format date for display (e.g., "Sunday 28")
+    current_date_formatted = current_date.strftime('%A %d')
 
     if request.method == "POST":
         food_id = int(request.form.get("food_id"))
@@ -290,7 +337,7 @@ def meals():
         db.commit()
         return redirect("/meals")
 
-    # GET
+    # GET - fetch meals for selected date
     foods = db.execute("SELECT * FROM foods ORDER BY name")
     
     meals_list = db.execute(
@@ -298,13 +345,22 @@ def meals():
         SELECT meals.*, foods.name
         FROM meals
         JOIN foods ON meals.food_id = foods.id
-        WHERE meals.user_id = ? AND DATE(meals.created_at) = DATE('now')
+        WHERE meals.user_id = ? AND DATE(meals.created_at) = ?
         ORDER BY meals.created_at DESC
         """,
-        (user_id,)
+        (user_id, current_date_str)
     )
     
-    return render_template("meals.html", foods=foods, meals=meals_list)
+    return render_template(
+        "meals.html", 
+        foods=foods, 
+        meals=meals_list,
+        current_date=current_date_str,
+        current_date_formatted=current_date_formatted,
+        prev_date=prev_date,
+        next_date=next_date,
+        today=today.strftime('%Y-%m-%d')
+    )
 
 
 @app.route("/edit_meal/<int:meal_id>", methods=["POST"])
@@ -313,6 +369,9 @@ def edit_meal(meal_id):
     db = get_db()
     user_id = session["user_id"]
     
+    # Get return date
+    return_date = request.form.get("return_date", "")
+    
     # Verify meal belongs to user
     meal = db.execute(
         "SELECT * FROM meals WHERE id = ? AND user_id = ?",
@@ -320,13 +379,13 @@ def edit_meal(meal_id):
     ).fetchone()
     
     if not meal:
-        return redirect("/meals")
+        return redirect("/meals" + (f"?date={return_date}" if return_date else ""))
     
     # Get new grams
     new_grams = float(request.form.get("grams"))
     
     if new_grams <= 0:
-        return redirect("/meals")
+        return redirect("/meals" + (f"?date={return_date}" if return_date else ""))
     
     # Get food info
     food = db.execute(
@@ -351,7 +410,7 @@ def edit_meal(meal_id):
     )
     db.commit()
     
-    return redirect("/meals")
+    return redirect("/meals" + (f"?date={return_date}" if return_date else ""))
 
 
 @app.route("/delete_meal/<int:meal_id>", methods=["POST"])
@@ -360,6 +419,9 @@ def delete_meal(meal_id):
     db = get_db()
     user_id = session["user_id"]
     
+    # Get return date
+    return_date = request.form.get("return_date", "")
+    
     # Verify meal belongs to user before deleting
     db.execute(
         "DELETE FROM meals WHERE id = ? AND user_id = ?",
@@ -367,7 +429,7 @@ def delete_meal(meal_id):
     )
     db.commit()
     
-    return redirect("/meals")
+    return redirect("/meals" + (f"?date={return_date}" if return_date else ""))
 
 
 @app.route("/weight", methods=["GET", "POST"])
