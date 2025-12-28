@@ -3,15 +3,15 @@
 {% block title %}Meals{% endblock %}
 
 {% block main %}
-<h2 class="mb-4">🍽️ Record meal</h2>
+<h2 class="mb-4">🍽️ Log Meal</h2>
 
 <div class="row">
-    <!-- Formulario para agregar comida existente -->
+    <!-- Form to add existing food -->
     <div class="col-md-6">
         <div class="card shadow mb-4">
             <div class="card-body">
-                <h5 class="card-title">Add meal</h5>
-
+                <h5 class="card-title">Add Meal</h5>
+                
                 {% if error %}
                 <div class="alert alert-danger">{{ error }}</div>
                 {% endif %}
@@ -22,9 +22,9 @@
 
                 <form method="post" action="{{ url_for('meals') }}">
                     <div class="mb-3">
-                        <label class="form-label">Meal</label>
+                        <label class="form-label">Food</label>
                         <select name="food_id" class="form-select" required>
-                            <option value="">Select a meal</option>
+                            <option value="">Select a food</option>
                             {% for food in foods %}
                             <option value="{{ food.id }}">{{ food.name }}</option>
                             {% endfor %}
@@ -33,55 +33,56 @@
 
                     <div class="mb-3">
                         <label class="form-label">Grams</label>
-                        <input type="number" step="0.1" name="grams" class="form-control" placeholder="Ej: 150" required
-                            min="0.1">
+                        <input type="number" step="0.1" name="grams" class="form-control" 
+                               placeholder="e.g., 150" required min="0.1">
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Add meal</button>
+                    <button type="submit" class="btn btn-primary">Add Meal</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Formulario para crear nuevo alimento -->
+    <!-- Form to create new food -->
     <div class="col-md-6">
         <div class="card shadow mb-4 border-success">
             <div class="card-body">
-                <h5 class="card-title text-success">➕ Create new meal</h5>
-                <p class="text-muted small">Cant find your meal? Add it here</p>
+                <h5 class="card-title text-success">➕ Create New Food</h5>
+                <p class="text-muted small">Can't find your food? Add it here</p>
 
                 <form method="post" action="{{ url_for('add_food') }}">
                     <div class="mb-3">
-                        <label class="form-label">Name of the meal</label>
-                        <input type="text" name="name" class="form-control" placeholder="Ej: Strawberry" required>
+                        <label class="form-label">Food name</label>
+                        <input type="text" name="name" class="form-control" 
+                               placeholder="e.g., Strawberry" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Protein (g per 100g)</label>
-                        <input type="number" step="0.1" name="protein_100g" class="form-control" placeholder="Ej: 0.7"
-                            required min="0" max="100">
+                        <input type="number" step="0.1" name="protein_100g" class="form-control" 
+                               placeholder="e.g., 0.7" required min="0" max="100">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Carbohydrates (g per 100g)</label>
-                        <input type="number" step="0.1" name="carbs_100g" class="form-control" placeholder="Ej: 7.7"
-                            required min="0" max="100">
+                        <label class="form-label">Carbs (g per 100g)</label>
+                        <input type="number" step="0.1" name="carbs_100g" class="form-control" 
+                               placeholder="e.g., 7.7" required min="0" max="100">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Fat (g per 100g)</label>
-                        <input type="number" step="0.1" name="fat_100g" class="form-control" placeholder="Ej: 0.3"
-                            required min="0" max="100">
+                        <label class="form-label">Fats (g per 100g)</label>
+                        <input type="number" step="0.1" name="fat_100g" class="form-control" 
+                               placeholder="e.g., 0.3" required min="0" max="100">
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100">Create Meal</button>
+                    <button type="submit" class="btn btn-success w-100">Create Food</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Lista de comidas del día -->
+<!-- Today's meals list with edit/delete options -->
 {% set meals_list = meals|list %}
 {% if meals_list %}
 <div class="card shadow">
@@ -91,33 +92,58 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Meal</th>
-                        <th>Quantity</th>
+                        <th>Food</th>
+                        <th>Amount</th>
                         <th>Protein</th>
-                        <th>Carbohydrates</th>
-                        <th>Fat</th>
+                        <th>Carbs</th>
+                        <th>Fats</th>
                         <th>Calories</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for meal in meals_list %}
-                    <tr>
+                    <tr id="meal-row-{{ meal.id }}">
                         <td><strong>{{ meal.name }}</strong></td>
-                        <td>{{ "%.0f"|format(meal.grams) }}g</td>
+                        <td>
+                            <span id="grams-display-{{ meal.id }}">{{ "%.0f"|format(meal.grams) }}g</span>
+                            <input type="number" step="0.1" id="grams-edit-{{ meal.id }}" 
+                                   value="{{ meal.grams }}" class="form-control form-control-sm" 
+                                   style="display: none; width: 80px;" min="0.1">
+                        </td>
                         <td>{{ "%.1f"|format(meal.protein_g) }}g</td>
                         <td>{{ "%.1f"|format(meal.carbs_g) }}g</td>
                         <td>{{ "%.1f"|format(meal.fat_g) }}g</td>
                         <td>{{ "%.0f"|format(meal.calories) }} kcal</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editMeal({{ meal.id }})">
+                                ✏️
+                            </button>
+                            <button class="btn btn-sm btn-success" id="save-btn-{{ meal.id }}" 
+                                    style="display: none;" onclick="saveMeal({{ meal.id }}, {{ meal.food_id }})">
+                                ✅
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="cancel-btn-{{ meal.id }}" 
+                                    style="display: none;" onclick="cancelEdit({{ meal.id }}, {{ meal.grams }})">
+                                ❌
+                            </button>
+                            <form method="post" action="{{ url_for('delete_meal', meal_id=meal.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Are you sure you want to delete this meal?');">
+                                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr class="table-primary fw-bold">
-                        <td colspan="2">TOTAL FOR THE DAY</td>
+                        <td colspan="2">TODAY'S TOTAL</td>
                         <td>{{ "%.1f"|format(meals_list|sum(attribute='protein_g')) }}g</td>
                         <td>{{ "%.1f"|format(meals_list|sum(attribute='carbs_g')) }}g</td>
                         <td>{{ "%.1f"|format(meals_list|sum(attribute='fat_g')) }}g</td>
                         <td>{{ "%.0f"|format(meals_list|sum(attribute='calories')) }} kcal</td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>
@@ -130,4 +156,58 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editMeal(mealId) {
+    // Hide display and show input
+    document.getElementById('grams-display-' + mealId).style.display = 'none';
+    document.getElementById('grams-edit-' + mealId).style.display = 'inline-block';
+    
+    // Change buttons
+    document.querySelector(`#meal-row-${mealId} .btn-warning`).style.display = 'none';
+    document.getElementById('save-btn-' + mealId).style.display = 'inline-block';
+    document.getElementById('cancel-btn-' + mealId).style.display = 'inline-block';
+    document.querySelector(`#meal-row-${mealId} .btn-danger`).style.display = 'none';
+}
+
+function cancelEdit(mealId, originalGrams) {
+    // Restore original value
+    document.getElementById('grams-edit-' + mealId).value = originalGrams;
+    
+    // Return to display mode
+    document.getElementById('grams-display-' + mealId).style.display = 'inline';
+    document.getElementById('grams-edit-' + mealId).style.display = 'none';
+    
+    // Restore buttons
+    document.querySelector(`#meal-row-${mealId} .btn-warning`).style.display = 'inline-block';
+    document.getElementById('save-btn-' + mealId).style.display = 'none';
+    document.getElementById('cancel-btn-' + mealId).style.display = 'none';
+    document.querySelector(`#meal-row-${mealId} .btn-danger`).style.display = 'inline-block';
+}
+
+function saveMeal(mealId, foodId) {
+    const newGrams = document.getElementById('grams-edit-' + mealId).value;
+    
+    if (newGrams <= 0) {
+        alert('Grams must be greater than 0');
+        return;
+    }
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/edit_meal/' + mealId;
+    
+    const gramsInput = document.createElement('input');
+    gramsInput.type = 'hidden';
+    gramsInput.name = 'grams';
+    gramsInput.value = newGrams;
+    
+    form.appendChild(gramsInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 {% endblock %}

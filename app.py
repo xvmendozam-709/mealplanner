@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "tu_clave_secreta_aqui"  # CAMBIAR en producción
+app.secret_key = "your_secret_key_here"  # CHANGE in production
 
 DB = "macros.db"
 
@@ -18,7 +18,7 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Decorador para rutas que requieren login
+# Decorator for routes requiring login
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -35,21 +35,21 @@ def register():
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
-        # Validaciones
+        # Validations
         if not username:
-            return render_template("register.html", error="Debe ingresar un usuario")
+            return render_template("register.html", error="Must provide username")
         if not password:
-            return render_template("register.html", error="Debe ingresar una contraseña")
+            return render_template("register.html", error="Must provide password")
         if password != confirmation:
-            return render_template("register.html", error="Las contraseñas no coinciden")
+            return render_template("register.html", error="Passwords do not match")
 
-        # Verificar si el usuario ya existe
+        # Check if user already exists
         db = get_db()
         existing = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
         if existing:
-            return render_template("register.html", error="El usuario ya existe")
+            return render_template("register.html", error="Username already exists")
 
-        # Crear usuario
+        # Create user
         hash_password = generate_password_hash(password)
         db.execute(
             "INSERT INTO users (username, hash) VALUES (?, ?)",
@@ -57,12 +57,19 @@ def register():
         )
         db.commit()
 
+        # Auto login
+        user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+
+        return redirect("/")
+
     return render_template("register.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Limpiar sesión
+    # Clear session
     session.clear()
 
     if request.method == "POST":
@@ -70,18 +77,21 @@ def login():
         password = request.form.get("password")
 
         if not username:
-            return render_template("login.html", error="Must enter a user")
+            return render_template("login.html", error="Must provide username")
         if not password:
-            return render_template("login.html", error="Must enter a password")
+            return render_template("login.html", error="Must provide password")
 
-        # Verificar credenciales
+        # Verify credentials
         db = get_db()
         user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
 
-        if user is None or not check_password_hash(user["hash"], password):
-            return render_template("login.html", error="User or passwoord incorrect")
+        if user is None:
+            return render_template("login.html", error="User does not exist. Want to register?")
+        
+        if not check_password_hash(user["hash"], password):
+            return render_template("login.html", error="Incorrect password")
 
-        # Iniciar sesión
+        # Start session
         session["user_id"] = user["id"]
         session["username"] = user["username"]
 
@@ -107,7 +117,7 @@ def index():
         (user_id,)
     ).fetchone()
 
-    # Obtener totales del día
+    # Get today's totals
     today_totals = db.execute(
         """
         SELECT 
@@ -121,11 +131,17 @@ def index():
         (user_id,)
     ).fetchone()
 
+    # Get current weight
+    current_weight = db.execute(
+        "SELECT weight_kg FROM weight WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+        (user_id,)
+    ).fetchone()
 
     return render_template(
         "index.html",
         goal=goal,
         today=today_totals,
+        weight=current_weight
     )
 
 
@@ -141,11 +157,11 @@ def goals():
         fat = int(request.form.get("fat_g", 0))
         calories = request.form.get("calories", "")
 
-        # Validar
+        # Validate
         if protein < 0 or carbs < 0 or fat < 0:
             return redirect("/goals")
 
-        # Calcular calorías si no se ingresó
+        # Calculate calories if not entered
         if not calories:
             calories = None
         else:
@@ -174,35 +190,36 @@ def goals():
 @login_required
 def add_food():
     db = get_db()
-
-    name = request.form.get("name").strip()
+    
+    # Convert name to uppercase
+    name = request.form.get("name").strip().upper()
     protein_100g = float(request.form.get("protein_100g"))
     carbs_100g = float(request.form.get("carbs_100g"))
     fat_100g = float(request.form.get("fat_100g"))
-
-    # Validaciones
+    
+    # Validations
     error = None
-
+    
     if not name:
-        error = "You must enter a name for the food."
+        error = "Must provide a food name"
     elif protein_100g < 0 or protein_100g > 100:
-        error = "The protein should be between 0 and 100 grams"
+        error = "Protein must be between 0 and 100 grams"
     elif carbs_100g < 0 or carbs_100g > 100:
-        error = "Carbohydrates should be between 0 and 100 grams"
+        error = "Carbs must be between 0 and 100 grams"
     elif fat_100g < 0 or fat_100g > 100:
-        error = "Fats should be between 0 and 100 grams"
+        error = "Fats must be between 0 and 100 grams"
     elif (protein_100g + carbs_100g + fat_100g) > 100:
-        error = "The sum of macronutrients cannot exceed 100g"
+        error = "Sum of macronutrients cannot exceed 100g"
     else:
-        # Verificar si el alimento ya existe
+        # Check if food already exists
         existing = db.execute(
-            "SELECT * FROM foods WHERE LOWER(name) = LOWER(?)",
+            "SELECT * FROM foods WHERE name = ?",
             (name,)
         ).fetchone()
-
+        
         if existing:
-            error = f"The food '{name}' already exists in the database"
-
+            error = f"Food '{name}' already exists in database"
+    
     if error:
         foods = db.execute("SELECT * FROM foods ORDER BY name")
         meals_list = db.execute(
@@ -216,8 +233,8 @@ def add_food():
             (session["user_id"],)
         )
         return render_template("meals.html", foods=foods, meals=meals_list, error=error)
-
-    # Insertar nuevo alimento
+    
+    # Insert new food
     db.execute(
         """
         INSERT INTO foods (name, protein_100g, carbs_100g, fat_100g)
@@ -226,8 +243,8 @@ def add_food():
         (name, protein_100g, carbs_100g, fat_100g)
     )
     db.commit()
-
-    # Redirigir con mensaje de éxito
+    
+    # Redirect with success message
     foods = db.execute("SELECT * FROM foods ORDER BY name")
     meals_list = db.execute(
         """
@@ -239,8 +256,9 @@ def add_food():
         """,
         (session["user_id"],)
     )
-    return render_template("meals.html", foods=foods, meals=meals_list,
-                           success=f"¡Alimento '{name}' creado exitosamente!")
+    return render_template("meals.html", foods=foods, meals=meals_list, 
+                         success=f"Food '{name}' created successfully!")
+
 
 @app.route("/meals", methods=["GET", "POST"])
 @login_required
@@ -288,6 +306,70 @@ def meals():
     
     return render_template("meals.html", foods=foods, meals=meals_list)
 
+
+@app.route("/edit_meal/<int:meal_id>", methods=["POST"])
+@login_required
+def edit_meal(meal_id):
+    db = get_db()
+    user_id = session["user_id"]
+    
+    # Verify meal belongs to user
+    meal = db.execute(
+        "SELECT * FROM meals WHERE id = ? AND user_id = ?",
+        (meal_id, user_id)
+    ).fetchone()
+    
+    if not meal:
+        return redirect("/meals")
+    
+    # Get new grams
+    new_grams = float(request.form.get("grams"))
+    
+    if new_grams <= 0:
+        return redirect("/meals")
+    
+    # Get food info
+    food = db.execute(
+        "SELECT * FROM foods WHERE id = ?",
+        (meal["food_id"],)
+    ).fetchone()
+    
+    # Recalculate macros
+    protein = food["protein_100g"] * new_grams / 100
+    carbs = food["carbs_100g"] * new_grams / 100
+    fat = food["fat_100g"] * new_grams / 100
+    calories = protein * 4 + carbs * 4 + fat * 9
+    
+    # Update database
+    db.execute(
+        """
+        UPDATE meals 
+        SET grams = ?, protein_g = ?, carbs_g = ?, fat_g = ?, calories = ?
+        WHERE id = ? AND user_id = ?
+        """,
+        (new_grams, protein, carbs, fat, calories, meal_id, user_id)
+    )
+    db.commit()
+    
+    return redirect("/meals")
+
+
+@app.route("/delete_meal/<int:meal_id>", methods=["POST"])
+@login_required
+def delete_meal(meal_id):
+    db = get_db()
+    user_id = session["user_id"]
+    
+    # Verify meal belongs to user before deleting
+    db.execute(
+        "DELETE FROM meals WHERE id = ? AND user_id = ?",
+        (meal_id, user_id)
+    )
+    db.commit()
+    
+    return redirect("/meals")
+
+
 @app.route("/weight", methods=["GET", "POST"])
 @login_required
 def weight():
@@ -296,7 +378,7 @@ def weight():
 
     if request.method == "POST":
         weight_kg = float(request.form.get("weight_kg"))
-
+        
         db.execute(
             "INSERT INTO weight (user_id, weight_kg) VALUES (?, ?)",
             (user_id, weight_kg)
@@ -304,7 +386,7 @@ def weight():
         db.commit()
         return redirect("/weight")
 
-    # GET - últimos 30 registros
+    # GET - last 30 records
     history = db.execute(
         """
         SELECT * FROM weight 
@@ -316,6 +398,7 @@ def weight():
     )
 
     return render_template("weight.html", history=history)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
