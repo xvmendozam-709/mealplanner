@@ -24,10 +24,21 @@
 
             <div class="collapse navbar-collapse" id="nav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('goals') }}">Goals</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('meals') }}">Meals</a></li>
-                    <!-- luego agregamos: Meals, Goals, Login/Logout -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('goals') }}">Goals</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('meals') }}">Meals</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link text-white-50">👤 {{ session.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Salir</a>
+                    </li>
                 </ul>
             </div>
         </div>
