@@ -50,14 +50,3 @@ CREATE TABLE IF NOT EXISTS weight (
     recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
--- Insertar alimentos de ejemplo
-INSERT INTO foods (name, protein_100g, carbs_100g, fat_100g) VALUES
-('Pollo pechuga', 31.0, 0.0, 3.6),
-('Arroz blanco', 2.7, 28.0, 0.3),
-('Huevo', 13.0, 1.1, 11.0),
-('Banana', 1.1, 23.0, 0.3),
-('Avena', 13.0, 67.0, 7.0),
-('Salmón', 20.0, 0.0, 13.0),
-('Batata', 1.6, 20.0, 0.1),
-('Palta', 2.0, 9.0, 15.0);

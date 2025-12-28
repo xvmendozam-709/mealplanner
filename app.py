@@ -170,6 +170,78 @@ def goals():
     return render_template("goals.html", goal=goal)
 
 
+@app.route("/add_food", methods=["POST"])
+@login_required
+def add_food():
+    db = get_db()
+
+    name = request.form.get("name").strip()
+    protein_100g = float(request.form.get("protein_100g"))
+    carbs_100g = float(request.form.get("carbs_100g"))
+    fat_100g = float(request.form.get("fat_100g"))
+
+    # Validaciones
+    error = None
+
+    if not name:
+        error = "You must enter a name for the food."
+    elif protein_100g < 0 or protein_100g > 100:
+        error = "The protein should be between 0 and 100 grams"
+    elif carbs_100g < 0 or carbs_100g > 100:
+        error = "Carbohydrates should be between 0 and 100 grams"
+    elif fat_100g < 0 or fat_100g > 100:
+        error = "Fats should be between 0 and 100 grams"
+    elif (protein_100g + carbs_100g + fat_100g) > 100:
+        error = "The sum of macronutrients cannot exceed 100g"
+    else:
+        # Verificar si el alimento ya existe
+        existing = db.execute(
+            "SELECT * FROM foods WHERE LOWER(name) = LOWER(?)",
+            (name,)
+        ).fetchone()
+
+        if existing:
+            error = f"The food '{name}' already exists in the database"
+
+    if error:
+        foods = db.execute("SELECT * FROM foods ORDER BY name")
+        meals_list = db.execute(
+            """
+            SELECT meals.*, foods.name
+            FROM meals
+            JOIN foods ON meals.food_id = foods.id
+            WHERE meals.user_id = ? AND DATE(meals.created_at) = DATE('now')
+            ORDER BY meals.created_at DESC
+            """,
+            (session["user_id"],)
+        )
+        return render_template("meals.html", foods=foods, meals=meals_list, error=error)
+
+    # Insertar nuevo alimento
+    db.execute(
+        """
+        INSERT INTO foods (name, protein_100g, carbs_100g, fat_100g)
+        VALUES (?, ?, ?, ?)
+        """,
+        (name, protein_100g, carbs_100g, fat_100g)
+    )
+    db.commit()
+
+    # Redirigir con mensaje de éxito
+    foods = db.execute("SELECT * FROM foods ORDER BY name")
+    meals_list = db.execute(
+        """
+        SELECT meals.*, foods.name
+        FROM meals
+        JOIN foods ON meals.food_id = foods.id
+        WHERE meals.user_id = ? AND DATE(meals.created_at) = DATE('now')
+        ORDER BY meals.created_at DESC
+        """,
+        (session["user_id"],)
+    )
+    return render_template("meals.html", foods=foods, meals=meals_list,
+                           success=f"¡Alimento '{name}' creado exitosamente!")
+
 @app.route("/meals", methods=["GET", "POST"])
 @login_required
 def meals():
