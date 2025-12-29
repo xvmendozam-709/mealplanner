@@ -87,8 +87,7 @@ Meal & Macro Tracker is a web application built with Flask that helps users trac
 ## Technical Implementation
 
 ### File Structure
-```
-cs50FinalProject/
+mealplanner/
 app.py                      # Main Flask application
 schema.sql                  # Database schema
 populate_foods.sql          # Migration script for food database
@@ -101,47 +100,21 @@ templates/
     ─ goals.html              # Goal setting page
     ─ meals.html              # Meal tracking page with food logs and edits
     ─ weight.html             # Weight tracking page
-```
+
 
 ### Database Schema
 
 #### users table
-Stores user authentication information:
-- `id`: Primary key
-- `username`: Unique username
-- `hash`: Hashed password using Werkzeug
-- `created_at`: Registration timestamp
-
+Stores user authentication information.
 #### goals table
-Stores user macronutrient goals:
-- `id`: Primary key
-- `user_id`: Foreign key to users
-- `protein_g`, `carbs_g`, `fat_g`: Daily goals in grams
-- `calories`: Optional calorie goal
-- `created_at`: Timestamp
-
+Stores user macronutrient goals
 #### foods table
-Contains food items with nutritional values per 100g:
-- `id`: Primary key
-- `name`: Food name (unique, case-insensitive, stored in UPPERCASE)
-- `protein_100g`, `carbs_100g`, `fat_100g`: Macros per 100g (REAL type for decimal precision)
-- `calories_100g`: Actual calorie content per 100g (REAL type)
-
+Contains food items with nutritional values per 100g.
 #### meals table
-Logs individual meal entries:
-- `id`: Primary key
-- `user_id`: Foreign key to users
-- `food_id`: Foreign key to foods
-- `grams`: Amount consumed (REAL type for decimal precision)
-- `protein_g`, `carbs_g`, `fat_g`, `calories`: Calculated values based on portion size
-- `created_at`: Timestamp (can be set to past dates for historical tracking)
-
+Logs individual meal entries.
 #### weight table
-Tracks user weight over time:
-- `id`: Primary key
-- `user_id`: Foreign key to users
-- `weight_kg`: Weight in kilograms (REAL type for decimal precision)
-- `recorded_at`: Timestamp
+Tracks user weight over time.
+
 
 ### Key Design Decisions
 
