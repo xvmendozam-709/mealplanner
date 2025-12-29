@@ -3,8 +3,7 @@
 #### Description:
 
 ## Overview
-Meal & Macro Tracker is a web application built with Flask that helps users track their daily food intake and macronutrient consumption (protein, carbohydrates, and fats). The application allows users to set daily macronutrient goals and monitor their progress throughout the day, similar to MyFitnessPal but focused specifically on macronutrients without the complexity of micronutrients.
-
+Meal & Macro Tracker is a web application built with Flask that helps users track their daily food intake, calories and macronutrient consumption (protein, carbohydrates, and fats). The application allows users to set daily macronutrient goals and monitor their progress throughout the day.
 ## Features
 
 ### User Authentication
@@ -90,18 +89,18 @@ Meal & Macro Tracker is a web application built with Flask that helps users trac
 ### File Structure
 ```
 cs50FinalProject/
-├── app.py                      # Main Flask application
-├── schema.sql                  # Database schema
-├── migrate_add_calories.sql    # Migration script for calorie column
-├── macros.db                   # SQLite database
-└── templates/
-    ├── layout.html             # Base template with navbar
-    ├── index.html              # Dashboard
-    ├── login.html              # Login page
-    ├── register.html           # Registration page
-    ├── goals.html              # Goal setting page
-    ├── meals.html              # Meal tracking page
-    └── weight.html             # Weight tracking page
+app.py                      # Main Flask application
+schema.sql                  # Database schema
+populate_foods.sql          # Migration script for food database
+macros.db                   # SQLite database
+templates/
+    ─ layout.html             # Base template with navbar
+    ─ index.html              # Dashboard
+    ─ login.html              # Login page
+    ─ register.html           # Registration page
+    ─ goals.html              # Goal setting page
+    ─ meals.html              # Meal tracking page with food logs and edits
+    ─ weight.html             # Weight tracking page
 ```
 
 ### Database Schema
@@ -184,7 +183,7 @@ Tracks user weight over time:
     - Comprehensive historical analysis
     - More flexible meal planning and tracking
 
-12. **Weekly Averages**: The dashboard shows 7-day averages instead of just today's summary, providing better insights into overall dietary patterns and trends over time.
+12. **Weekly Averages**: The dashboard shows 7-day averages instead of just today's summary, providing better insights into overall dietary patterns and trends over time. If a day has no meal logs, the average won't count that day.
 
 ### Challenges Overcome
 
@@ -213,31 +212,6 @@ Tracks user weight over time:
 
 10. **Weekly Average with Sparse Data**: Calculating 7-day averages when users don't log meals every day required using a subquery that groups by date first, then calculates averages only for days with data.
 
-## How to Run
-
-1. Install dependencies:
-```bash
-pip install flask
-```
-
-2. Initialize the database:
-```bash
-sqlite3 macros.db < schema.sql
-```
-
-3. (Optional) If migrating from an old version without calorie data:
-```bash
-sqlite3 macros.db < migrate_add_calories.sql
-```
-
-4. Run the application:
-```bash
-flask run
-```
-
-5. Navigate to `http://127.0.0.1:5000`
-
-6. Create an account and start tracking!
 
 ## Usage Guide
 
@@ -256,11 +230,11 @@ flask run
    - Use the green "Create New Food" form
    - Enter calorie content per 100g (most important!)
    - Enter macronutrient values per 100g
-   - The food will be available immediately in uppercase
+   - The food will be available immediately
 
 4. **Historical Tracking**:
    - Go to "Meals"
-   - Use ← Previous / Next → arrows to navigate dates
+   - Use Previous / Next arrows to navigate dates
    - Add meals to any past date using the form
    - Edit or delete historical meals as needed
    - Current date is shown as "Sunday 28", "Monday 29", etc.
@@ -290,36 +264,7 @@ Potential features for future versions:
 - Barcode scanner integration for packaged foods
 - Recipe calculator that sums up ingredients
 - Meal planning feature for upcoming days
-- Integration with fitness trackers
 - Photo upload for meals
 - Sharing/collaboration features
 - Multi-language support
-- Dark mode toggle
 
-## Security Considerations
-
-- Passwords are hashed using Werkzeug's `generate_password_hash()` before storage
-- SQL injection is prevented through parameterized queries throughout the application
-- Session secret key should be changed in production (currently set to a placeholder)
-- User input is validated on both frontend (HTML5) and backend (Python)
-- Protected routes require authentication via `@login_required` decorator
-- User data isolation ensures users can only access their own meals, goals, and weight data
-
-## Acknowledgments
-
-This project was created as the final project for CS50's Introduction to Computer Science course. Special thanks to David J. Malan and the CS50 team for their excellent instruction and resources.
-
-The project demonstrates understanding of:
-- Web development with Flask (routing, templates, sessions)
-- Database design and SQL (schema design, queries, migrations)
-- User authentication and session management
-- Form validation and error handling
-- Template rendering with Jinja2
-- RESTful routing principles
-- Responsive design with Bootstrap
-- Data modeling and normalization
-- Historical data management and date manipulation
-
-## License
-
-This project is submitted as coursework for CS50 and follows Harvard's academic honesty policies.
