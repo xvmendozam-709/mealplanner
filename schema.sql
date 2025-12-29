@@ -18,14 +18,6 @@ CREATE TABLE IF NOT EXISTS goals (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- FOODS table
-CREATE TABLE IF NOT EXISTS foods (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    protein_100g REAL NOT NULL,
-    carbs_100g REAL NOT NULL,
-    fat_100g REAL NOT NULL
-);
 
 -- MEALS table
 CREATE TABLE IF NOT EXISTS meals (
@@ -49,4 +41,14 @@ CREATE TABLE IF NOT EXISTS weight (
     weight_kg REAL NOT NULL,
     recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Tabla de alimentos
+CREATE TABLE IF NOT EXISTS foods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    protein_100g REAL NOT NULL,
+    carbs_100g REAL NOT NULL,
+    fat_100g REAL NOT NULL,
+    calories_100g REAL NOT NULL
 );

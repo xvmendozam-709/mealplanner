@@ -86,7 +86,7 @@ def login():
         user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
 
         if user is None:
-            return render_template("login.html", error="User does not exist")
+            return render_template("login.html", error="User does not exist. Want to register?")
         
         if not check_password_hash(user["hash"], password):
             return render_template("login.html", error="Incorrect password")
@@ -218,6 +218,7 @@ def add_food():
     
     # Convert name to uppercase
     name = request.form.get("name").strip().upper()
+    calories_100g = float(request.form.get("calories_100g"))
     protein_100g = float(request.form.get("protein_100g"))
     carbs_100g = float(request.form.get("carbs_100g"))
     fat_100g = float(request.form.get("fat_100g"))
@@ -227,6 +228,8 @@ def add_food():
     
     if not name:
         error = "Must provide a food name"
+    elif calories_100g < 0 or calories_100g > 900:
+        error = "Calories must be between 0 and 900 kcal"
     elif protein_100g < 0 or protein_100g > 100:
         error = "Protein must be between 0 and 100 grams"
     elif carbs_100g < 0 or carbs_100g > 100:
@@ -257,32 +260,31 @@ def add_food():
             """,
             (session["user_id"],)
         )
-        return render_template("meals.html", foods=foods, meals=meals_list, error=error)
+        from datetime import datetime
+        return render_template(
+            "meals.html", 
+            foods=foods, 
+            meals=meals_list, 
+            error=error,
+            current_date=datetime.now().date().strftime('%Y-%m-%d'),
+            current_date_formatted=datetime.now().date().strftime('%A %d'),
+            prev_date=(datetime.now().date() - __import__('datetime').timedelta(days=1)).strftime('%Y-%m-%d'),
+            next_date=(datetime.now().date() + __import__('datetime').timedelta(days=1)).strftime('%Y-%m-%d'),
+            today=datetime.now().date().strftime('%Y-%m-%d')
+        )
     
-    # Insert new food
+    # Insert new food with calories
     db.execute(
         """
-        INSERT INTO foods (name, protein_100g, carbs_100g, fat_100g)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO foods (name, protein_100g, carbs_100g, fat_100g, calories_100g)
+        VALUES (?, ?, ?, ?, ?)
         """,
-        (name, protein_100g, carbs_100g, fat_100g)
+        (name, protein_100g, carbs_100g, fat_100g, calories_100g)
     )
     db.commit()
     
     # Redirect with success message
-    foods = db.execute("SELECT * FROM foods ORDER BY name")
-    meals_list = db.execute(
-        """
-        SELECT meals.*, foods.name
-        FROM meals
-        JOIN foods ON meals.food_id = foods.id
-        WHERE meals.user_id = ? AND DATE(meals.created_at) = DATE('now')
-        ORDER BY meals.created_at DESC
-        """,
-        (session["user_id"],)
-    )
-    return render_template("meals.html", foods=foods, meals=meals_list, 
-                         success=f"Food '{name}' created successfully!")
+    return redirect("/meals")
 
 
 @app.route("/meals", methods=["GET", "POST"])
@@ -322,10 +324,12 @@ def meals():
             (food_id,)
         ).fetchone()
         
+        # Calculate macros based on grams
         protein = food["protein_100g"] * grams / 100
         carbs = food["carbs_100g"] * grams / 100
         fat = food["fat_100g"] * grams / 100
-        calories = protein * 4 + carbs * 4 + fat * 9
+        # Calculate calories from food's calorie data (not from macros!)
+        calories = food["calories_100g"] * grams / 100
         
         db.execute(
             """
@@ -393,11 +397,12 @@ def edit_meal(meal_id):
         (meal["food_id"],)
     ).fetchone()
     
-    # Recalculate macros
+    # Recalculate macros and calories based on new grams
     protein = food["protein_100g"] * new_grams / 100
     carbs = food["carbs_100g"] * new_grams / 100
     fat = food["fat_100g"] * new_grams / 100
-    calories = protein * 4 + carbs * 4 + fat * 9
+    # Use actual calorie data from food (not calculated from macros!)
+    calories = food["calories_100g"] * new_grams / 100
     
     # Update database
     db.execute(
