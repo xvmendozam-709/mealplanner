@@ -318,6 +318,8 @@ def meals():
     if request.method == "POST":
         food_id = int(request.form.get("food_id"))
         grams = float(request.form.get("grams"))
+        # Get the date for which we're adding the meal
+        target_date = request.form.get("target_date", current_date_str)
 
         food = db.execute(
             "SELECT * FROM foods WHERE id = ?",
@@ -331,15 +333,16 @@ def meals():
         # Calculate calories from food's calorie data (not from macros!)
         calories = food["calories_100g"] * grams / 100
         
+        # Insert meal with specific date
         db.execute(
             """
-            INSERT INTO meals (user_id, food_id, grams, protein_g, carbs_g, fat_g, calories)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO meals (user_id, food_id, grams, protein_g, carbs_g, fat_g, calories, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime(?))
             """,
-            (user_id, food_id, grams, protein, carbs, fat, calories)
+            (user_id, food_id, grams, protein, carbs, fat, calories, target_date + ' 12:00:00')
         )
         db.commit()
-        return redirect("/meals")
+        return redirect(f"/meals?date={target_date}")
 
     # GET - fetch meals for selected date
     foods = db.execute("SELECT * FROM foods ORDER BY name")

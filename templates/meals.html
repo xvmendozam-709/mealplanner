@@ -21,6 +21,8 @@
                 {% endif %}
 
                 <form method="post" action="{{ url_for('meals') }}">
+                    <input type="hidden" name="target_date" value="{{ current_date }}">
+                    
                     <div class="mb-3">
                         <label class="form-label">Food</label>
                         <select name="food_id" class="form-select" required>
@@ -37,7 +39,7 @@
                                placeholder="e.g., 150" required min="0.1">
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Add Meal</button>
+                    <button type="submit" class="btn btn-primary">Add Meal to {{ current_date_formatted }}</button>
                 </form>
             </div>
         </div>
@@ -133,23 +135,23 @@
                         <td>{{ "%.1f"|format(meal.carbs_g) }}g</td>
                         <td>{{ "%.1f"|format(meal.fat_g) }}g</td>
                         <td>{{ "%.0f"|format(meal.calories) }} kcal</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="editMeal({{ meal.id }})">
+                        <td class="text-nowrap">
+                            <button class="btn btn-sm btn-warning" onclick="editMeal({{ meal.id }})" title="Edit">
                                 ✏️
                             </button>
                             <button class="btn btn-sm btn-success" id="save-btn-{{ meal.id }}" 
-                                    style="display: none;" onclick="saveMeal({{ meal.id }}, {{ meal.food_id }}, '{{ current_date }}')">
+                                    style="display: none;" onclick="saveMeal({{ meal.id }}, {{ meal.food_id }}, '{{ current_date }}')" title="Save">
                                 ✅
                             </button>
                             <button class="btn btn-sm btn-secondary" id="cancel-btn-{{ meal.id }}" 
-                                    style="display: none;" onclick="cancelEdit({{ meal.id }}, {{ meal.grams }})">
+                                    style="display: none;" onclick="cancelEdit({{ meal.id }}, {{ meal.grams }})" title="Cancel">
                                 ❌
                             </button>
                             <form method="post" action="{{ url_for('delete_meal', meal_id=meal.id) }}" 
                                   style="display: inline;" 
                                   onsubmit="return confirm('Are you sure you want to delete this meal?');">
                                 <input type="hidden" name="return_date" value="{{ current_date }}">
-                                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete">🗑️</button>
                             </form>
                         </td>
                     </tr>
@@ -169,7 +171,7 @@
         </div>
         {% else %}
         <div class="alert alert-info">
-            No meals logged for this day. {% if current_date == today %}Start by adding your first meal! 🍽️{% endif %}
+            No meals logged for this day. {% if current_date == today %}Add your first meal above!{% else %}Use the form above to add meals for {{ current_date_formatted }}.{% endif %} 🍽️
         </div>
         {% endif %}
     </div>

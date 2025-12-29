@@ -14,14 +14,17 @@
 {% if goal %}
 <div class="alert alert-success d-flex justify-content-between align-items-center">
     <div>
-        <strong>Daily Goal:</strong> 
+        <strong>Macros and Calorie Goals:</strong> 
         P {{ goal.protein_g }}g • C {{ goal.carbs_g }}g • F {{ goal.fat_g }}g
         {% if goal.calories %} • {{ goal.calories }} kcal{% endif %}
     </div>
     <a href="{{ url_for('goals') }}" class="btn btn-sm btn-outline-success">Edit</a>
 </div>
 
+
+
 <div class="row g-4 mb-4">
+    <h4 class="card-title"> Today's Progress</h4>
     <!-- Protein -->
     <div class="col-md-3">
         <div class="card shadow-sm">
