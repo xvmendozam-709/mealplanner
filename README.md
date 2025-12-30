@@ -3,12 +3,11 @@
 #### Description:
 
 ## Overview
-Meal & Macro Tracker is a web application built with Flask that helps users track their daily food intake, calories and macronutrient consumption (protein, carbohydrates, and fats). The application allows users to set daily macronutrient goals and monitor their progress throughout the day.
+Meal & Macro Tracker is a web application built with Flask that helps users track their daily food intake, including calories and macronutrient (protein, carbohydrates, and fats) consumption. The application allows users to set daily macronutrient goals and monitor their progress throughout the day. It also keeps a record of the last 30 weight logs with its correspondant date.
 ## Features
 
 ### User Authentication
 - **Registration System**: New users can create an account with a username and password
-- **Secure Login**: Passwords are hashed using Werkzeug's security functions
 - **Differentiated Error Messages**: The login system provides specific feedback:
   - "User does not exist" when the username is not registered
   - "Incorrect password" when the password is wrong for an existing user
@@ -23,7 +22,6 @@ Meal & Macro Tracker is a web application built with Flask that helps users trac
   - Fats (grams)
   - Calories (optional)
 - Goals can be updated at any time
-- The system stores the history of goal changes
 
 ### Meal Tracking
 - **Food Database**: Pre-populated with common foods and their accurate nutritional values per 100g
@@ -37,16 +35,13 @@ Meal & Macro Tracker is a web application built with Flask that helps users trac
     - The sum of all macros cannot exceed 100g per 100g of food
     - Duplicate food names are not allowed (case-insensitive check)
     - Negative values are not permitted
-- **Historical Date Navigation**: Browse and edit meals from any previous day
-  - Arrow navigation (← Previous / Next →) to move between dates
-  - Date displayed as "Sunday 28", "Monday 29", etc.
-  - Cannot navigate to future dates
-  - Add meals to past dates to backfill your tracking history
 - **Meal Logging**: Users can:
   - Select a food from the database (including their custom foods)
   - Enter the amount consumed in grams
   - Add meals to the current day or any previous date
+  - Arrow navigation (Previous / Next) to move between dates
   - View all meals for a specific date
+  - Cannot navigate to future dates
 - **Edit and Delete Meals**: 
   - Edit meal portions inline by clicking the pencil (✏️) icon
   - Delete meals with confirmation by clicking the trash (🗑️) icon
@@ -81,13 +76,12 @@ Meal & Macro Tracker is a web application built with Flask that helps users trac
 - **Change Tracking**: Automatically calculates weight changes between entries:
   - Shows positive changes in red (weight gain)
   - Shows negative changes in green (weight loss)
-  - Shows neutral changes in gray
 - **Current Weight Display**: Shows the most recent weight prominently on the dashboard
 
 ## Technical Implementation
 
 ### File Structure
-mealplanner/
+mealtracker/
 app.py                      # Main Flask application
 schema.sql                  # Database schema
 populate_foods.sql          # Migration script for food database
