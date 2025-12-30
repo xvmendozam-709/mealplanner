@@ -11,15 +11,7 @@
         <div class="card shadow mb-4">
             <div class="card-body">
                 <h5 class="card-title">Add Meal</h5>
-                
-                {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-
-                {% if success %}
-                <div class="alert alert-success">{{ success }}</div>
-                {% endif %}
-
+        
                 <form method="post" action="{{ url_for('meals') }}">
                     <input type="hidden" name="target_date" value="{{ current_date }}">
                     
@@ -82,6 +74,14 @@
                         <input type="number" step="0.1" name="fat_100g" class="form-control" 
                                placeholder="e.g., 0.3" required min="0" max="100">
                     </div>
+
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+    
+                    {% if success %}
+                    <div class="alert alert-success">{{ success }}</div>
+                    {% endif %}
 
                     <button type="submit" class="btn btn-success w-100">Create Food</button>
                 </form>

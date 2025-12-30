@@ -104,16 +104,11 @@ templates/
 
 ### Database Schema
 
-#### users table
-Stores user authentication information.
-#### goals table
-Stores user macronutrient goals
-#### foods table
-Contains food items with nutritional values per 100g.
-#### meals table
-Logs individual meal entries.
-#### weight table
-Tracks user weight over time.
+#### users table: Stores user authentication information.
+#### goals table: Stores user macronutrient goals
+#### foods table: Contains food items with nutritional values per 100g.
+#### meals table: Logs individual meal entries.
+#### weight table: Tracks user weight over time.
 
 
 ### Key Design Decisions
